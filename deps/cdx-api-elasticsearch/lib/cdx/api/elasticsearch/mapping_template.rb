@@ -10,7 +10,7 @@ class Cdx::Api::Elasticsearch::MappingTemplate
 
   def template
     {
-      template: @api.config.template_name_pattern,
+      template: template_name,
       mappings: {
         test: test_mapping,
         encounter: encounter_mapping
@@ -18,18 +18,25 @@ class Cdx::Api::Elasticsearch::MappingTemplate
     }
   end
 
+  def template_name
+    @api.config.template_name_pattern
+  end
+
   def encounter_mapping
-    Cdx.core_field_scopes.find{|s| s.name == 'encounter'}.elasticsearch_mapping
+    {
+      dynamic_templates: build_dynamic_templates,
+      properties: build_properties_mapping_from(%W(encounter patient institution))
+    }
   end
 
   def test_mapping
     {
-      dynamic_templates: build_test_dynamic_templates,
-      properties: build_test_properties_mapping
+      dynamic_templates: build_dynamic_templates,
+      properties: build_properties_mapping_from(Cdx.core_field_scopes.map(&:name))
     }
   end
 
-  def build_test_dynamic_templates
+  def build_dynamic_templates
     [
       {
         "admin_levels" => {
@@ -46,12 +53,12 @@ class Cdx::Api::Elasticsearch::MappingTemplate
     ]
   end
 
-  def build_test_properties_mapping
-    scoped_fields = Cdx.core_field_scopes.select(&:searchable?)
+  def build_properties_mapping_from(scopes)
+    scoped_fields = Cdx.core_field_scopes.select{|s| s.searchable? && scopes.include?(s.name)}
 
     Hash[
       scoped_fields.map { |scope|
-        [ scope.name, scope.elasticsearch_mapping ]
+        [ scope.name.to_s, scope.elasticsearch_mapping ]
       }
     ]
   end

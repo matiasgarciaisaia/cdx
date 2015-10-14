@@ -1,51 +1,25 @@
-class TestResultIndexer
-  attr_reader :test_result, :fields
+class TestResultIndexer < EntityIndexer
 
-  def initialize test_result
-    @test_result = test_result
-  end
-
-  def device
-    test_result.device
-  end
+  alias_method :test_result, :entity
 
   def index(refresh = false)
-    fields = core_fields()
-    run_before_index_hooks(fields)
-    options = {index: Cdx::Api.index_name, type: type, body: fields, id: test_result.uuid}
-    options[:refresh] = true if refresh
-    client.index(options)
+    super
+    percolate
+  end
 
-    percolate_result = client.percolate index: Cdx::Api.index_name,
-                                        type: type,
-                                        id: test_result.uuid
+  def percolate
+    percolate_result = client.percolate index: Cdx::Api.index_name, type: type, id: test_result.uuid
     percolate_result["matches"].each do |match|
       subscriber_id = match["_id"]
       NotifySubscriberJob.perform_later subscriber_id, test_result.uuid
     end
   end
 
-  def run_before_index_hooks(fields)
-    Cdx.core_field_scopes.each do |scope|
-      scope.fields.each do |field|
-        field.before_index fields
-      end
-    end
-  end
-
-  def destroy
-    client.delete(index: Cdx::Api.index_name, type: type, id: test_result.uuid)
-  end
-
   def type
     'test'
   end
 
-  def client
-    Cdx::Api.client
-  end
-
-  def core_fields
+  def fields_to_index
     site = device.site
     site_uuid = site.try &:uuid
     site_name = site.try &:name
@@ -91,38 +65,14 @@ class TestResultIndexer
       deep_merge(all_custom_fields)
   end
 
-  def core_fields_from entity
-    if entity && !entity.empty_entity?
-      {entity.entity_scope => entity.core_fields.deep_merge("uuid" => entity.uuid)}
-    else
-      {}
-    end
+  def device
+    test_result.device
   end
 
   def all_custom_fields
-    fields = {}
-
-    append_custom_fields fields, test_result
-
-    if test_result.sample.present?
-      append_custom_fields fields, test_result.sample
-    end
-
-    if test_result.encounter.present?
-      append_custom_fields fields, test_result.encounter
-    end
-
-    if test_result.patient.present?
-      append_custom_fields fields, test_result.patient
-    end
-
-    fields
-  end
-
-  def append_custom_fields fields, entity
-    if entity.custom_fields.present?
-      fields[entity.entity_scope] ||= { "custom_fields" => {} }
-      fields[entity.entity_scope]["custom_fields"].deep_merge! entity.custom_fields
+    [test_result, test_result.sample, test_result.encounter, test_result.patient].inject(Hash.new) do |fields, entity|
+      append_custom_fields fields, entity
     end
   end
+
 end
