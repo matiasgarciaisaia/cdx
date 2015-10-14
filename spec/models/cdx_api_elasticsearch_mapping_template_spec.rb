@@ -1,14 +1,18 @@
 require "bundler/setup"
 require "cdx/api/elasticsearch"
-require "pry-byebug"
 
 describe "Cdx::Api::Elasticsearch::MappingTemplate" do
 
   describe "Mapping template" do
     let(:template) { Cdx::Api::Elasticsearch::MappingTemplate.new "cdx_tests_template" }
 
-    it "maps the core fields" do
-      expect(template.build_dynamic_templates).to eq([
+    it "maps encounter core fields" do
+      actual = template.encounter_mapping['properties'].keys.map(&:to_s)
+      expect(actual).to match_array(%W(id uuid start_time end_time custom_fields))
+    end
+
+    it "maps test core fields with dynamic templates" do
+      expect(template.build_test_dynamic_templates).to eq([
         {
           "admin_levels" => {
             path_match: "*.admin_level_*",
@@ -24,8 +28,8 @@ describe "Cdx::Api::Elasticsearch::MappingTemplate" do
       ])
     end
 
-    it "maps the core fields" do
-      expect(template.build_properties_mapping).to eq(
+    it "maps test core fields with properties" do
+      expect(template.build_test_properties_mapping).to eq(
         {
           "sample"=> {
             "properties" => {
@@ -203,7 +207,21 @@ describe "Cdx::Api::Elasticsearch::MappingTemplate" do
                 "properties" => {}
               }
             }
-          }
+          },
+          "encounter"=>
+            {"properties"=>
+              {"id"=>{"type"=>"string", "index"=>"not_analyzed"},
+               "uuid"=>{"type"=>"string", "index"=>"not_analyzed"},
+               "start_time"=> {
+                  "type"=> "date",
+                  "index"=> "not_analyzed"
+                },
+                "end_time"=> {
+                  "type"=> "date",
+                  "index"=> "not_analyzed"
+                },
+               "custom_fields"=>{"type"=>"object"}}}
+
         }
       )
     end

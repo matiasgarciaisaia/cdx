@@ -117,4 +117,12 @@ encounter:
   allows_custom: true
   fields:
     id:
+      searchable: true
     uuid:
+      searchable: true
+    start_time:
+      type: date
+      searchable: true
+    end_time:
+      type: date
+      searchable: true

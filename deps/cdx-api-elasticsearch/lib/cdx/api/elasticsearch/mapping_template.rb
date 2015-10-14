@@ -12,29 +12,24 @@ class Cdx::Api::Elasticsearch::MappingTemplate
     {
       template: @api.config.template_name_pattern,
       mappings: {
-        test: mapping
+        test: test_mapping,
+        encounter: encounter_mapping
       }
     }
   end
 
-  def mapping
+  def encounter_mapping
+    Cdx.core_field_scopes.find{|s| s.name == 'encounter'}.elasticsearch_mapping
+  end
+
+  def test_mapping
     {
-      dynamic_templates: build_dynamic_templates,
-      properties: build_properties_mapping
+      dynamic_templates: build_test_dynamic_templates,
+      properties: build_test_properties_mapping
     }
   end
 
-  def update_indices
-    @api.client.indices.put_mapping({
-      index: @api.config.template_name_pattern,
-      body: mapping,
-      type: 'test'
-    })
-  rescue Elasticsearch::Transport::Transport::Errors::NotFound => ex
-    nil
-  end
-
-  def build_dynamic_templates
+  def build_test_dynamic_templates
     [
       {
         "admin_levels" => {
@@ -51,7 +46,7 @@ class Cdx::Api::Elasticsearch::MappingTemplate
     ]
   end
 
-  def build_properties_mapping
+  def build_test_properties_mapping
     scoped_fields = Cdx.core_field_scopes.select(&:searchable?)
 
     Hash[
