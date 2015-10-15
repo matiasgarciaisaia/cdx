@@ -231,7 +231,7 @@ describe Cdx::Api::Elasticsearch::MappingTemplate do
   let(:template) { Cdx::Api::Elasticsearch::MappingTemplate.new }
 
   it "generates mappings for all entities" do
-    expect(template.template[:mappings].keys).to contain_exactly(:test, :encounter)
+    expect(template.template[:mappings].keys).to contain_exactly(:test, :case)
   end
 
   it "builds dynamic templates for locations and custom fields" do
@@ -251,8 +251,8 @@ describe Cdx::Api::Elasticsearch::MappingTemplate do
     ])
   end
 
-  describe "encounter mapping" do
-    let(:mapping) { template.template[:mappings][:encounter] }
+  describe "case mapping" do
+    let(:mapping) { template.template[:mappings][:case] }
 
     it_should_behave_like 'having encounter fields'
     it_should_behave_like 'having patient fields'

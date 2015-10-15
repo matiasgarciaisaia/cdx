@@ -13,7 +13,7 @@ class Cdx::Api::Elasticsearch::MappingTemplate
       template: template_name,
       mappings: {
         test: test_mapping,
-        encounter: encounter_mapping
+        case: case_mapping
       }
     }
   end
@@ -22,7 +22,7 @@ class Cdx::Api::Elasticsearch::MappingTemplate
     @api.config.template_name_pattern
   end
 
-  def encounter_mapping
+  def case_mapping
     {
       dynamic_templates: build_dynamic_templates,
       properties: build_properties_mapping_from(%W(encounter patient institution))
