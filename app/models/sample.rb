@@ -7,6 +7,8 @@ class Sample < ActiveRecord::Base
   belongs_to :patient
   belongs_to :encounter
 
+  has_one :case, as: :source
+
   has_many :test_results
 
   validates_presence_of :institution

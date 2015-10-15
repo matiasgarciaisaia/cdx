@@ -128,6 +128,20 @@ Site.blueprint do
   lng { rand(-90..90) }
 end
 
+Case.blueprint do; end
+
+Case.blueprint(:test_result) do
+  source { TestResult.make }
+end
+
+Case.blueprint(:sample) do
+  source { Sample.make }
+end
+
+Case.blueprint(:encounter) do
+  source { Encounter.make }
+end
+
 Location; class Location
   def self.make(params={})
     LocationService.repository.make(params)

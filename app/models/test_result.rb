@@ -10,6 +10,8 @@ class TestResult < ActiveRecord::Base
 
   has_and_belongs_to_many :device_messages
 
+  has_one :case, as: :source
+
   belongs_to :device
   belongs_to :institution
   belongs_to :site
