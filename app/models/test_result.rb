@@ -53,6 +53,11 @@ class TestResult < ActiveRecord::Base
     data
   end
 
+  def case
+    Case.where("(source_type = 'TestResult' AND source_id = ?) OR (source_type = 'Sample' AND source_id = ?) OR (source_type = 'Encounter' AND source_id = ?)",
+      id, sample_id, encounter_id).first
+  end
+
   def self.supports_identifier?(key)
     key.blank?
   end
